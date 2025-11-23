@@ -1,0 +1,37 @@
+... a single python script with no external dependencies. It will be a tool for orchestrating the typical stages of a
+software development project, based on the project lifecycle in a manner similar to that provided by Maven (but not
+using XML, nor having any concern about dependency management, and assume git is the version control system).
+
+This tool is intended as a cross-platform replacement for certain maven usages. A configuration file will be processed,
+which will allow the various phases in the lifecycle to be given: clean and deep-clean standalone phases; prepare,
+test-compile, compile, test, package, integration-test, deploy. Each of these phases will be associated with a
+section in the configuration file (indexed by its phase name). This section will contain an external command that will
+be executed. The phases will be given on the command line. All phases leading in order to the requested phase will be
+run. Any non-zero exit from a given command will terminate the execution. A command line flag will permit the named
+phases to be run directly, without all earlier phases. The tool will have its own variable storage, so that a command
+line of the form -D xyz=abc will define a variable called xyz containing the value abc. The external commands that are
+given in the configuration file can have variables interpolated, so, for example, the section:
+`compile: xyztool -X $xyz; echo $ENV{USER}`
+would run the external `xyztool` with the arguments `-X abc` (interpolating the xyz variable given on the command line.
+It would then echo the `USER` environment variable. Interpolation would be performed for variables and environment
+variables. For POSIX systems, the bash (etc.) shell would be used to run the external commands; on Windows, PowerShell
+would be used. Any undefined variables or environment variables would cause the tool to fail with an appropriate error
+message. Each phase (and external command) can also have a 'variant' given next to the phase name in the configuration
+file - this variant represents the platform type, e.g. macOS, Linux, Windows - ideally, a target triple as will be
+found at https://doc.rust-lang.org/nightly/rustc/platform-support.html - so that if the 'compile' phase is invoked,
+then the appropriate external command is run, given that there would be  `compile:aarch64-apple-darwin`,
+`compile:86_64-pc-windows-msvc` and `compile:x86_64-unknown-linux-gnu` sections. It should be possible to omit the
+execution of a given phase, by having an optional 'unless' command given against a phase section - this would either be
+an external command that would sense whether the phase should be run or not (returning true/false via an appropriate
+exit code), or a '-e filepath' option that checks for the existence of a named file (interpolation can be done on this
+command/file check). Each stage of the execution of the tool needs to be clearly emitted to stdout. The full command
+that the tool executes in each phase should be emitted. The output of each command (its stdout and stderr, if any)
+should be emitted (clearly distinguishable from the tool's own output). The project version (following semver, and
+allowing a -SNAPSHOT suffix) should be stored in the configuration file. It can be interpolated with the $VERSION
+variable. Finally, the tool should support a 'release' phase. Similar to maven's release mechanism, this will: ensure
+there are no uncommitted changes in the working directory; re-clone the repo into a clean 'release' subdirectory, then
+in this 'release' directory, update the version in the tools' configuration file to the next semver version (with an
+interactive prompt to ensure that the correct version is chosen), run the test and integration-test phases (which will
+prepare, test-compile, compile, package), and if successful, run the deploy phase to publish the new version's
+artefacts, then commit the changed control file, tag the repo with the newly-chosen version number, update the version
+to the next version with -SNAPSHOT added to the version, and push all these changes.
