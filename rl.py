@@ -9,16 +9,16 @@ consent in the creation of Large Language Models. I understand the
 environmental impact of this technology.
 """
 
-import sys
 import os
 import platform
-import subprocess
 import re
 import shutil
+import subprocess
+import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
-import json
+from typing import Dict, List, Optional, Any
 
+VERSION = "0.0.1-SNAPSHOT"
 
 class BuildError(Exception):
     """Custom exception for build failures."""
@@ -432,8 +432,8 @@ class BuildTool:
 
 def print_usage():
     """Print usage information."""
-    print("""
-releaselite - rl.py - Build Orchestration Tool
+    print(f"""
+releaselite - rl.py - Build Orchestration Tool - {VERSION} 
 
 Usage:
     rl.py [options] <phase> [<phase> ...]
@@ -458,10 +458,14 @@ Examples:
 
 def main():
     """Main entry point."""
-    if len(sys.argv) < 2 or '-h' in sys.argv or '--help' in sys.argv:
+    if len(sys.argv) < 2 or '-h' in sys.argv or '-?' in sys.argv or '--help' in sys.argv:
         print_usage()
         sys.exit(0)
-    
+
+    if '-v' in sys.argv or '--version' in sys.argv:
+        print(f"rl.py version {VERSION}")
+        sys.exit(0)
+
     tool = BuildTool()
     phases = []
     
