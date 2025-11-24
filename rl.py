@@ -2,6 +2,11 @@
 """
 Cross-platform build orchestration tool with lifecycle phase management.
 Similar to Maven but using a simple configuration format.
+
+(C) 2025 Matt Gumbley, developed initially by Claude.ai.
+I gratefully acknowledge the work of others that was stolen without
+consent in the creation of Large Language Models. I understand the
+environmental impact of this technology.
 """
 
 import sys
@@ -145,6 +150,7 @@ class BuildTool:
             if env_var not in os.environ:
                 raise BuildError(f"Environment variable '{env_var}' is not defined")
             result = result.replace(f'$ENV{{{env_var}}}', os.environ[env_var])
+            # TODO test - the three lots of braces?
         
         # Check for undefined variables (remaining $VAR patterns)
         undefined_vars = re.findall(r'\$([A-Za-z_][A-Za-z0-9_]*)', result)
@@ -348,6 +354,8 @@ class BuildTool:
             release_tool.load_config()
             
             # Run test and integration-test phases
+            # TODO this should be just up to the deploy phase, so it'll incorporate test/integration-test. Otherwise
+            # everything will run again on deploy below.
             print(f"\n[RELEASE] Running test and integration-test phases...")
             release_tool.execute_phases(['integration-test'])
             
@@ -384,6 +392,7 @@ class BuildTool:
             # Push changes
             print(f"\n[RELEASE] Pushing changes and tags...")
             subprocess.run(['git', 'push', 'origin', current_branch], check=True)
+            # TODO not sure about this - needs testing
             subprocess.run(['git', 'push', 'origin', release_version], check=True)
             
             print(f"\n{'='*70}")
@@ -424,10 +433,10 @@ class BuildTool:
 def print_usage():
     """Print usage information."""
     print("""
-Build Orchestration Tool
+releaselite - rl.py - Build Orchestration Tool
 
 Usage:
-    build.py [options] <phase> [<phase> ...]
+    rl.py [options] <phase> [<phase> ...]
 
 Phases:
     Lifecycle: prepare, test-compile, compile, test, package, integration-test, deploy
@@ -439,11 +448,11 @@ Options:
     -h, --help           Show this help message
 
 Examples:
-    build.py compile                    # Run all phases up to compile
-    build.py -D env=prod deploy         # Define variable and run up to deploy
-    build.py --direct test              # Run only the test phase
-    build.py clean compile              # Run clean, then all phases up to compile
-    build.py release                    # Execute release process
+    rl.py compile                    # Run all phases up to compile
+    rl.py -D env=prod deploy         # Define variable and run up to deploy
+    rl.py --direct test              # Run only the test phase
+    rl.py clean compile              # Run clean, then all phases up to compile
+    rl.py release                    # Execute release process
 """)
 
 
@@ -485,6 +494,8 @@ def main():
             print(f"Error: Unknown option '{arg}'", file=sys.stderr)
             sys.exit(1)
         else:
+            # TODO validate phase? Just storing it allows for non-standard but useful phases (but where do they go
+            # in the lifecycle?)
             phases.append(arg)
         
         i += 1
