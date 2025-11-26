@@ -226,28 +226,37 @@ class BuildTool:
         print(f"[BUILD] Command: {interpolated_command}")
         print(f"[BUILD] Platform: {self.current_platform}")
         print(f"[OUTPUT] {'─'*70}")
-        
+
+        # Flush to ensure output appears before subprocess output
+        sys.stdout.flush()
         # Execute the command
         shell_cmd = self._get_shell_command() + [interpolated_command]
         
         try:
-            result = subprocess.run(
+            # Streaming output
+            process = subprocess.Popen(
                 shell_cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
-                text=True
+                text=True,
+                bufsize=1, # Line buffered
+                universal_newlines=True
             )
-            
-            # Print output
-            if result.stdout:
-                print(result.stdout, end='')
-            
+
+            # Stream output line by line as it's produced
+            if process.stdout:
+                for line in process.stdout:
+                    print(line, end='')
+                    sys.stdout.flush()
+            # Wait for process to complete
+            return_code = process.wait()
+
             print(f"[OUTPUT] {'─'*70}")
-            print(f"[BUILD] Phase '{phase}' exit code: {result.returncode}")
-            
-            if result.returncode != 0:
-                raise BuildError(f"Phase '{phase}' failed with exit code {result.returncode}")
-                
+            print(f"[BUILD] Phase '{phase}' exit code: {return_code}")
+
+            if return_code != 0:
+                raise BuildError(f"Phase '{phase}' failed with exit code {return_code}")
+
         except Exception as e:
             if isinstance(e, BuildError):
                 raise
