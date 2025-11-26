@@ -11,6 +11,7 @@ environmental impact of this technology.
 
 import os
 import platform
+import pprint
 import re
 import shutil
 import subprocess
@@ -45,6 +46,7 @@ class BuildTool:
         self.variables: Dict[str, str] = {}
         self.current_platform = self._detect_platform()
         self.use_direct_phases = False
+        self.debug = False
         
     def _detect_platform(self) -> str:
         """Detect the current platform and return a target triple."""
@@ -88,6 +90,8 @@ class BuildTool:
             content = f.read()
         
         self.config = self._parse_config(content)
+        if self.debug:
+            pprint.pprint(self.config)
         
         # Set VERSION variable from config
         if 'version' in self.config:
@@ -502,7 +506,11 @@ def main():
         elif arg == '--direct':
             tool.use_direct_phases = True
             print(f"[BUILD] Direct phase execution enabled")
-            
+
+        elif arg == '--debug':
+            tool.debug = True
+            print(f"[BUILD] Debug enabled")
+
         elif arg.startswith('-'):
             print(f"Error: Unknown option '{arg}'", file=sys.stderr)
             sys.exit(1)
