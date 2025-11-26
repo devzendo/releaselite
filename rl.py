@@ -101,7 +101,7 @@ class BuildTool:
     def _parse_config(self, content: str) -> Dict[str, Any]:
         """Parse the configuration file format."""
         config = {}
-        current_phase = None
+        current_phase = (None, None)
         
         for line in content.split('\n'):
             line = line.strip()
@@ -114,7 +114,14 @@ class BuildTool:
             if line.startswith('version:'):
                 config['version'] = line.split(':', 1)[1].strip()
                 continue
-            
+
+            # Unless clause
+            if line.startswith('unless:') and current_phase:
+                unless_cmd = line.split(':', 1)[1].strip()
+                phase_name, platform_key = current_phase
+                config[phase_name][platform_key]['unless'] = unless_cmd
+                continue
+
             # Phase declaration with optional platform variant
             phase_match = re.match(r'^([a-z\-]+)(?::([a-z0-9_\-]+))?\s*:\s*(.+)$', line)
             if phase_match:
@@ -129,14 +136,7 @@ class BuildTool:
                 config[phase_name][platform_key] = {'command': command}
                 current_phase = (phase_name, platform_key)
                 continue
-            
-            # Unless clause
-            if line.startswith('unless:') and current_phase:
-                unless_cmd = line.split(':', 1)[1].strip()
-                phase_name, platform_key = current_phase
-                config[phase_name][platform_key]['unless'] = unless_cmd
-                continue
-        
+
         return config
     
     def _interpolate_variables(self, command: str) -> str:
