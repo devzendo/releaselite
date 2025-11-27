@@ -46,6 +46,7 @@ class BuildTool:
         self.variables: Dict[str, str] = {}
         self.current_platform = self._detect_platform()
         self.use_direct_phases = False
+        self.force_unless_phases = False
         self.debug = False
         
     def _detect_platform(self) -> str:
@@ -165,7 +166,7 @@ class BuildTool:
     
     def _should_skip_phase(self, phase_config: Dict[str, str]) -> bool:
         """Check if a phase should be skipped based on 'unless' condition."""
-        if 'unless' not in phase_config:
+        if 'unless' not in phase_config or self.force_unless_phases:
             return False
         
         unless_cmd = phase_config['unless']
@@ -458,6 +459,7 @@ Phases:
 Options:
     -D <name>=<value>    Define a variable
     --direct             Execute only the named phases (skip prior phases)
+    --force              Force execution of phases omitted due to 'unless' lines.
     -h, --help           Show this help message
 
 Examples:
@@ -506,6 +508,10 @@ def main():
         elif arg == '--direct':
             tool.use_direct_phases = True
             print(f"[BUILD] Direct phase execution enabled")
+
+        elif arg == '--force':
+            tool.force_unless_phases = True
+            print(f"[BUILD] Forcing unless phases")
 
         elif arg == '--debug':
             tool.debug = True

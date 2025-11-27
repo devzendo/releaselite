@@ -172,6 +172,10 @@ This will create 'version.py' containing the project version number, unless that
 file already exists. As the prepare phase runs at the start of every lifecycle,
 you may only want to do it once.
 
+If you want to ignore the 'unless' command, and force the execution of a phase
+that would be skipped, use the '--force' command line option.
+
+
 ### The release phase
 If you produce a release of your software on every commit, this lifecycle phase
 is probably not for you. If you prefer referring to versions of your software
